@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <style name="Theme.QYNNLauncher" parent="Theme.AppCompat.DayNight.NoActionBar">
+        <item name="android:dialogTheme">@style/Theme.DialogFullScreen</item>
+    </style>
+
+    <style name="Theme.QYNNLauncher.Wallpaper" parent="Theme.QYNNLauncher">
+        <item name="android:windowShowWallpaper">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:statusBarColor">@android:color/transparent</item>
+    </style>
+
+    <style name="Theme.DialogFullScreen" parent="@style/ThemeOverlay.AppCompat.Dialog">
+        <item name="android:windowMinWidthMajor">100%</item>
+        <item name="android:windowMinWidthMinor">100%</item>
+        <item name="android:fitsSystemWindows">false</item>
+    </style>
+
+</resources>

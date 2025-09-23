@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">QYNN Launcher</string>
+    <string name="device_admin_prompt_desc">Enable to be able to allow projects to lock the screen.</string>
+    <string name="accessibility_service_desc">Enable to be able to allow projects to lock the screen.</string>
+    <string name="accessibility_service_label">QYNN Launcher Accessibility Service</string>
+    <string name="qs_tile_label">QYNN Menu</string>
+</resources>
