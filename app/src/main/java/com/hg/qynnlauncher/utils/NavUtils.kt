@@ -1,10 +1,17 @@
 package com.hg.qynnlauncher.utils
 
+import android.app.Activity
 import android.app.admin.DevicePolicyManager
 import android.content.Context
+import android.content.ContextWrapper
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
+import android.os.Looper
 import android.provider.Settings
+import android.util.Log
+import android.widget.Toast
+import com.hg.qynnlauncher.R
 import com.hg.qynnlauncher.services.apps.InstalledApp
 import com.hg.qynnlauncher.ui2.appdrawer.AppDrawerActivity
 import com.hg.qynnlauncher.ui2.devconsole.DevConsoleActivity
@@ -75,16 +82,98 @@ fun Context.requestAppUninstall(packageName: String)
 }
 
 fun Context.tryLaunchApp(app: InstalledApp) = tryOrShowErrorToast { launchApp(app) }
-fun Context.launchApp(app: InstalledApp) = launchApp(packageName)
+fun Context.launchApp(app: InstalledApp) = launchApp(app.packageName)
 
-fun Context.tryLaunchApp(packageName: String) = tryOrShowErrorToast { launchApp(packageName) }
-fun Context.launchApp(packageName: String)
-{
-    val intent = packageManager.getLaunchIntentForPackage(packageName)
-    if (intent != null)
-        startActivity(intent)
-    else
-        throw Exception("Launch intent not found.")
+
+private fun Context.findActivity(): Activity? {
+    var context = this
+    while (context is ContextWrapper) {
+        if (context is Activity) return context
+        context = context.baseContext
+    }
+    return null
+}
+
+/**
+ * Launches an application in a robust, clean, and user-friendly way.
+ *
+ * This function handles finding the correct launch intent, ensuring the app is brought to the foreground,
+ * providing smooth animations, and handling a variety of errors gracefully.
+ *
+ * @param packageName The package name of the application to launch.
+ *
+ * @see [Directive #1] New intent flags for a clean launch.
+ * @see [Directive #2] Comprehensive error handling and logging.
+ * @see [Directive #3] Custom launch animation.
+ * @see [Directive #4] Main thread enforcement.
+ * @see [Directive #7] Validation for exported activities on Android 12+.
+ * @see [Directive #8] Fallback scan for launchable activities.
+ * @see [Directive #12] This documentation block.
+ */
+fun Context.launchApp(packageName: String) {
+    // Directive #4: Enforce that startActivity() runs on the UI thread.
+    if (Looper.myLooper() != Looper.getMainLooper()) {
+        Log.e("NavUtils", "launchApp called from a background thread.", IllegalStateException())
+        // Optionally, you could use runOnUiThread here, but it's better to fix the call site.
+        // For now, we'll show a toast and log, then return.
+        Toast.makeText(this, "Error: Launch attempt from background thread.", Toast.LENGTH_SHORT).show()
+        return
+    }
+
+    try {
+        // Directive #1 & #8: Try to get the launch intent, with a fallback.
+        var launchIntent = packageManager.getLaunchIntentForPackage(packageName)
+
+        if (launchIntent == null) {
+            Log.w("NavUtils", "getLaunchIntentForPackage() returned null for $packageName. Falling back to queryIntentActivities().")
+            val intent = Intent(Intent.ACTION_MAIN, null)
+            intent.addCategory(Intent.CATEGORY_LAUNCHER)
+            intent.setPackage(packageName)
+            val activities = packageManager.queryIntentActivities(intent, 0)
+            if (activities.isNotEmpty()) {
+                val activityInfo = activities[0].activityInfo
+                launchIntent = Intent(Intent.ACTION_MAIN).apply {
+                    setClassName(activityInfo.packageName, activityInfo.name)
+                }
+            }
+        }
+
+        if (launchIntent == null) {
+            throw Exception("Could not find any launchable activity for package: $packageName")
+        }
+
+        // Directive #7: Respect Android 12+ exported requirements.
+        val resolveInfo = packageManager.resolveActivity(launchIntent, PackageManager.MATCH_DEFAULT_ONLY)
+        if (resolveInfo != null && !resolveInfo.activityInfo.exported) {
+            throw SecurityException("Cannot launch app $packageName: main activity is not exported.")
+        }
+
+        // Directive #1: Use clean and robust intent flags.
+        launchIntent.addFlags(
+            Intent.FLAG_ACTIVITY_NEW_TASK or
+            Intent.FLAG_ACTIVITY_CLEAR_TOP or
+            Intent.FLAG_ACTIVITY_SINGLE_TOP
+        )
+
+        val activity = findActivity()
+        if (activity != null) {
+            activity.startActivity(launchIntent)
+            // Directive #3: Apply a customizable launch animation.
+            activity.overridePendingTransition(R.anim.fade_in, 0)
+        } else {
+            // Fallback for non-activity contexts. Animation is not possible here.
+            startActivity(launchIntent)
+        }
+
+    } catch (e: Exception) {
+        // Directive #2: Comprehensive error handling and logging.
+        Log.e("NavUtils", "Failed to launch app: $packageName", e)
+        val errorMessage = when (e) {
+            is SecurityException -> "App cannot be launched due to security restrictions."
+            else -> "Could not open this application."
+        }
+        Toast.makeText(this, errorMessage, Toast.LENGTH_SHORT).show()
+    }
 }
 
 
