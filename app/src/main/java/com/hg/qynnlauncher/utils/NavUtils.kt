@@ -78,11 +78,30 @@ fun Context.tryLaunchApp(app: InstalledApp) = tryOrShowErrorToast { launchApp(ap
 fun Context.launchApp(app: InstalledApp) = launchApp(packageName)
 
 fun Context.tryLaunchApp(packageName: String) = tryOrShowErrorToast { launchApp(packageName) }
+
+private fun Context.findActivity(): android.app.Activity? {
+    var context = this
+    while (context is android.content.ContextWrapper) {
+        if (context is android.app.Activity) return context
+        context = context.baseContext
+    }
+    return null
+}
+
 fun Context.launchApp(packageName: String)
 {
     val intent = packageManager.getLaunchIntentForPackage(packageName)
     if (intent != null)
-        startActivity(intent)
+    {
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
+
+        val activity = findActivity()
+        if (activity != null) {
+            activity.startActivity(intent)
+        } else {
+            startActivity(intent)
+        }
+    }
     else
         throw Exception("Launch intent not found.")
 }
