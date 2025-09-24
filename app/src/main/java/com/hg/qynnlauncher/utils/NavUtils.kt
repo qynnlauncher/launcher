@@ -82,7 +82,10 @@ fun Context.launchApp(packageName: String)
 {
     val intent = packageManager.getLaunchIntentForPackage(packageName)
     if (intent != null)
+    {
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_RESET_TASK_IF_NEEDED)
         startActivity(intent)
+    }
     else
         throw Exception("Launch intent not found.")
 }
