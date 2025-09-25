@@ -6,11 +6,14 @@ import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.statusBars
 import androidx.compose.foundation.layout.windowInsetsTopHeight
+import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.LocalOverscrollConfiguration
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -39,6 +42,7 @@ import com.hg.qynnlauncher.ui2.theme.QYNNLauncherThemeStateless
 import com.hg.qynnlauncher.utils.UseEdgeToEdgeWithTransparentBars
 import com.hg.qynnlauncher.utils.launchApp
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AppDrawerScreen(
     vm: AppDrawerVM = viewModel(factory = AppDrawerVM.Factory),
@@ -56,6 +60,7 @@ fun AppDrawerScreen(
     )
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun AppDrawerScreen(
     filteredApps: List<IAppDrawerApp>,
@@ -89,9 +94,12 @@ fun AppDrawerScreen(
             }
         )
         {
-            LazyColumn(
-                modifier = Modifier
-                    .fillMaxSize()
+            CompositionLocalProvider(
+                LocalOverscrollConfiguration provides null
+            ) {
+                LazyColumn(
+                    modifier = Modifier
+                        .fillMaxSize()
                     .onGloballyPositioned {
                         dropdownParentSize = it.size
                     },
@@ -153,6 +161,7 @@ fun AppDrawerScreen(
                     Spacer(modifier = Modifier.windowInsetsTopHeight(WindowInsets.statusBars))
                 }
             }
+        }
 
             val state = appContextMenuState
             if (state != null)

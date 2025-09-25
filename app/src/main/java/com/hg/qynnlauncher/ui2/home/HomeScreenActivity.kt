@@ -4,10 +4,16 @@ import android.app.UiModeManager
 import android.content.Intent
 import android.content.res.Configuration
 import android.os.Bundle
+import android.view.ViewGroup
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.activity.viewModels
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsControllerCompat
+import com.hg.qynnlauncher.services.gestures.GestureOverlayView
 import com.hg.qynnlauncher.ui2.home.composables.HomeScreen2
 import com.hg.qynnlauncher.ui2.theme.QYNNLauncherTheme
 
@@ -21,24 +27,38 @@ class HomeScreenActivity : ComponentActivity()
 
     override fun onCreate(savedInstanceState: Bundle?)
     {
-        _modeman = getSystemService(UI_MODE_SERVICE) as UiModeManager
-
-        _homeScreenVM.afterCreate(this)
-
+        // This must be called before super.onCreate() for edge-to-edge to work correctly.
         enableEdgeToEdge()
 
         super.onCreate(savedInstanceState)
 
-        // immediately start another activity for debugging
-//        tryStartQYNNAppDrawerActivity()
-//        tryStartQYNNSettingsActivity()
-//        tryStartDevConsoleActivity()
+        // More robust edge-to-edge and gesture navigation setup
+        WindowCompat.setDecorFitsSystemWindows(window, false)
+        val windowInsetsController = WindowCompat.getInsetsController(window, window.decorView)
+        windowInsetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+
+        ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { view, windowInsets ->
+            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
+            // Apply the insets as padding to the decor view
+            view.setPadding(insets.left, insets.top, insets.right, insets.bottom)
+            // Return CONSUMED to prevent the system from consuming the insets
+            WindowInsetsCompat.CONSUMED
+        }
+
+
+        _modeman = getSystemService(UI_MODE_SERVICE) as UiModeManager
+        _homeScreenVM.afterCreate(this)
 
         setContent {
             QYNNLauncherTheme {
                 HomeScreen2(_homeScreenVM)
             }
         }
+
+        // Add the gesture overlay to the window
+        val decorView = window.decorView as ViewGroup
+        val gestureOverlay = GestureOverlayView(this)
+        decorView.addView(gestureOverlay)
     }
 
     override fun onConfigurationChanged(newConfig: Configuration)

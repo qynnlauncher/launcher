@@ -31,6 +31,7 @@ import com.hg.qynnlauncher.ui2.progressdialog.MockExportProgressDialogActions
 import com.hg.qynnlauncher.ui2.settings.SettingsScreen2MiscActions
 import com.hg.qynnlauncher.ui2.settings.SettingsScreenVM
 import com.hg.qynnlauncher.ui2.settings.sections.about.SettingsScreen2AboutSectionContent
+import com.hg.qynnlauncher.ui2.settings.sections.gestures.SettingsScreen2GesturesSectionContent
 import com.hg.qynnlauncher.ui2.settings.sections.qynn.SettingsScreen2QYNNSectionActions
 import com.hg.qynnlauncher.ui2.settings.sections.qynn.SettingsScreen2QYNNSectionContent
 import com.hg.qynnlauncher.ui2.settings.sections.qynn.SettingsScreen2QYNNSectionState
@@ -199,6 +200,12 @@ fun SettingsScreen2(
                         state = qynnSectionState,
                         actions = qynnSectionActions,
                     )
+                }
+
+                Divider()
+
+                SettingsScreen2Section(label = "Gestures", iconResId = R.drawable.ic_qynn) {
+                    SettingsScreen2GesturesSectionContent()
                 }
 
                 Divider()

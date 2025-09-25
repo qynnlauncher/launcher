@@ -4,4 +4,5 @@
     <string name="accessibility_service_desc">Enable to be able to allow projects to lock the screen.</string>
     <string name="accessibility_service_label">QYNN Launcher Accessibility Service</string>
     <string name="qs_tile_label">QYNN Menu</string>
+    <string name="gesture_service_description">Enables custom gesture navigation (Back, Home, Recents) for a smoother experience. This service is required for the edge swipe gestures to work.</string>
 </resources>

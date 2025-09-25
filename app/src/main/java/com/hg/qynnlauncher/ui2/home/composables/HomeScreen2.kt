@@ -1,7 +1,6 @@
 package com.hg.qynnlauncher.ui2.home.composables
 
 import android.view.View
-import android.webkit.WebView
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
@@ -20,6 +19,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.tooling.preview.PreviewLightDark
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.google.accompanist.pager.ExperimentalPagerApi
+import com.google.accompanist.pager.HorizontalPager
+import com.google.accompanist.pager.rememberPagerState
 import com.hg.qynnlauncher.services.displayshape.ObserveDisplayShape
 import com.hg.qynnlauncher.services.settings2.SystemBarAppearanceOptions
 import com.hg.qynnlauncher.services.windowinsetsholder.ObserveWindowInsets
@@ -40,6 +42,7 @@ import com.hg.qynnlauncher.webview.rememberWebViewNavigator
 
 private val TAG = "HomeScreen2"
 
+@OptIn(ExperimentalPagerApi::class)
 @Composable
 fun HomeScreen2(vm: HomeScreen2VM = viewModel())
 {
@@ -53,6 +56,7 @@ fun HomeScreen2(vm: HomeScreen2VM = viewModel())
     )
 }
 
+@OptIn(ExperimentalPagerApi::class)
 @Composable
 fun HomeScreen2(
     systemUIState: HomeScreenSystemUIState,
@@ -64,9 +68,6 @@ fun HomeScreen2(
     observerCallbacks: HomeScreenObserverCallbacks,
 )
 {
-    val webViewState = rememberSaveableWebViewState()
-    val webViewNavigator = rememberWebViewNavigator()
-
     SetHomeScreenSystemUIState(systemUIState)
 
     ObserveWindowInsets(
@@ -92,37 +93,48 @@ fun HomeScreen2(
             is IHomeScreenProjectState.Initializing -> PromptContainer { HomeScreenLoadingMessage() }
             is IHomeScreenProjectState.ProjectLoaded ->
             {
-                if (webViewDeps == null)
-                {
+                if (webViewDeps == null) {
                     WebViewPlaceholder()
-                }
-                else
-                {
-                    var webView by remember { mutableStateOf<WebView?>(null) }
+                } else {
+                    val pagerState = rememberPagerState()
+                    // For now, we'll use a fixed number of pages for demonstration
+                    val pageCount = 5
 
-                    WebView(
-                        state = webViewState,
-                        navigator = webViewNavigator,
-                        client = webViewDeps.webViewClient,
-                        chromeClient = webViewDeps.chromeClient,
-                        onCreated = {
-                            webView = it
-                            it.clearCache(true)
-                            webViewDeps.onCreated(it)
-                        },
-                        onDispose = {
-                            webView = null
-                            webViewDeps.onDispose
-                        },
-                        modifier = Modifier.fillMaxSize(),
-                    )
+                    HorizontalPager(
+                        count = pageCount,
+                        state = pagerState,
+                        modifier = Modifier.fillMaxSize()
+                    ) { page ->
+                        // Each page is a WebView that now correctly uses the webViewDeps
+                        val webViewState = rememberSaveableWebViewState()
+                        val navigator = rememberWebViewNavigator()
+                        var webView by remember { mutableStateOf<android.webkit.WebView?>(null) }
 
-                    val drawOverscrollEffects = webViewDeps.drawOverscrollEffects.value
-                    LaunchedEffect(drawOverscrollEffects) {
-                        webView?.overScrollMode = when (drawOverscrollEffects)
-                        {
-                            true -> View.OVER_SCROLL_IF_CONTENT_SCROLLS
-                            false -> View.OVER_SCROLL_NEVER
+                        WebView(
+                            state = webViewState,
+                            navigator = navigator,
+                            client = webViewDeps.webViewClient,
+                            chromeClient = webViewDeps.chromeClient,
+                            onCreated = {
+                                webView = it
+                                it.setBackgroundColor(0x00000000) // Transparent
+                                it.clearCache(true)
+                                webViewDeps.onCreated(it)
+                            },
+                            onDispose = {
+                                webView = null
+                                webViewDeps.onDispose
+                            },
+                            modifier = Modifier.fillMaxSize(),
+                        )
+
+                        val drawOverscrollEffects = webViewDeps.drawOverscrollEffects.value
+                        LaunchedEffect(drawOverscrollEffects) {
+                            webView?.overScrollMode = when (drawOverscrollEffects)
+                            {
+                                true -> View.OVER_SCROLL_IF_CONTENT_SCROLLS
+                                false -> View.OVER_SCROLL_NEVER
+                            }
                         }
                     }
                 }
@@ -165,6 +177,7 @@ fun WebViewPlaceholder(modifier: Modifier = Modifier)
 
 // PREVIEWS
 
+@OptIn(ExperimentalPagerApi::class)
 @Composable
 @PreviewLightDark
 fun HomeScreen2InitializingPreview()
@@ -189,6 +202,7 @@ fun HomeScreen2InitializingPreview()
     }
 }
 
+@OptIn(ExperimentalPagerApi::class)
 @Composable
 @PreviewLightDark
 fun HomeScreen2NoStoragePermsPreview()
@@ -213,6 +227,7 @@ fun HomeScreen2NoStoragePermsPreview()
     }
 }
 
+@OptIn(ExperimentalPagerApi::class)
 @Composable
 @PreviewLightDark
 fun HomeScreen2NoProjectPreviewNoMenu()
@@ -237,6 +252,7 @@ fun HomeScreen2NoProjectPreviewNoMenu()
     }
 }
 
+@OptIn(ExperimentalPagerApi::class)
 @Composable
 @PreviewLightDark
 fun HomeScreen2NoProjectPreviewMenuCollapsed()
@@ -261,6 +277,7 @@ fun HomeScreen2NoProjectPreviewMenuCollapsed()
     }
 }
 
+@OptIn(ExperimentalPagerApi::class)
 @Composable
 @PreviewLightDark
 fun HomeScreen2NoProjectPreviewMenuCollapsedWithAppDrawerButton()
@@ -285,6 +302,7 @@ fun HomeScreen2NoProjectPreviewMenuCollapsedWithAppDrawerButton()
     }
 }
 
+@OptIn(ExperimentalPagerApi::class)
 @Composable
 @PreviewLightDark
 fun HomeScreen2NoProjectPreviewMenuOpen()
