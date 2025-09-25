@@ -38,9 +38,6 @@ class HomeScreenActivity : ComponentActivity()
         windowInsetsController.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
 
         ViewCompat.setOnApplyWindowInsetsListener(window.decorView) { view, windowInsets ->
-            val insets = windowInsets.getInsets(WindowInsetsCompat.Type.systemBars())
-            // Apply the insets as padding to the decor view
-            view.setPadding(insets.left, insets.top, insets.right, insets.bottom)
             // Return CONSUMED to prevent the system from consuming the insets
             WindowInsetsCompat.CONSUMED
         }
