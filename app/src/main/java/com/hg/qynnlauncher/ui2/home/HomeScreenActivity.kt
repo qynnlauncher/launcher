@@ -14,6 +14,7 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.hg.qynnlauncher.services.gestures.GestureOverlayView
+import com.hg.qynnlauncher.services.gestures.GesturePillView
 import com.hg.qynnlauncher.ui2.home.composables.HomeScreen2
 import com.hg.qynnlauncher.ui2.theme.QYNNLauncherTheme
 
@@ -52,10 +53,12 @@ class HomeScreenActivity : ComponentActivity()
             }
         }
 
-        // Add the gesture overlay to the window
+        // Add the gesture overlay and pill to the window
         val decorView = window.decorView as ViewGroup
-        val gestureOverlay = GestureOverlayView(this)
+        val gesturePill = GesturePillView(this)
+        val gestureOverlay = GestureOverlayView(this, gesturePill)
         decorView.addView(gestureOverlay)
+        decorView.addView(gesturePill)
     }
 
     override fun onConfigurationChanged(newConfig: Configuration)

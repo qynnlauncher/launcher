@@ -1,17 +1,22 @@
 package com.hg.qynnlauncher.services.gestures
 
 import android.content.Context
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
 import android.view.GestureDetector
 import android.view.MotionEvent
 import android.view.VelocityTracker
 import android.view.View
+import androidx.core.content.getSystemService
 import androidx.core.view.GestureDetectorCompat
 import kotlin.math.abs
 
-class GestureOverlayView(context: Context) : View(context) {
+class GestureOverlayView(context: Context, private val pillView: GesturePillView) : View(context) {
 
     private val gestureDetector: GestureDetectorCompat
     private var velocityTracker: VelocityTracker? = null
+    private val vibrator: Vibrator? = context.getSystemService()
 
     companion object {
         private const val LEFT_EDGE = 0
@@ -58,7 +63,12 @@ class GestureOverlayView(context: Context) : View(context) {
                     e.rawY > height - bottomEdgeSizePx -> BOTTOM_EDGE
                     else -> null
                 }
-                // We return true only if the gesture starts in a valid zone
+
+                if (gestureZone != null) {
+                    pillView.onGestureStarted()
+                    vibrate(VibrationEffect.EFFECT_TICK)
+                }
+
                 return gestureZone != null
             }
 
@@ -70,6 +80,9 @@ class GestureOverlayView(context: Context) : View(context) {
             ): Boolean {
                 val startEvent = initialTouch ?: return false
                 val zone = gestureZone ?: return false
+
+                pillView.onGestureCompleted()
+                vibrate(VibrationEffect.EFFECT_HEAVY_CLICK)
 
                 when (zone) {
                     LEFT_EDGE -> {
@@ -105,9 +118,16 @@ class GestureOverlayView(context: Context) : View(context) {
                 val duration = e2.eventTime - startEvent.eventTime
                 val verticalMove = startEvent.y - e2.y
 
+                val progress = (verticalMove / distanceThresholdHomePx).coerceIn(0f, 1f)
+                pillView.onGestureProgress(progress)
+                if (progress > 0.5f) {
+                    vibrate(VibrationEffect.EFFECT_CLICK)
+                }
+
                 if (zone == BOTTOM_EDGE && verticalMove > distanceThresholdHomePx && duration > DURATION_THRESHOLD_HOME_MS) {
+                    pillView.onGestureCompleted()
+                    vibrate(VibrationEffect.EFFECT_HEAVY_CLICK)
                     QynnGestureAccessibilityService.instance?.performGlobalActionHome()
-                    // Reset to prevent multiple triggers
                     initialTouch = null
                     gestureZone = null
                     return true
@@ -123,10 +143,17 @@ class GestureOverlayView(context: Context) : View(context) {
         val consumed = gestureDetector.onTouchEvent(event)
 
         if (event.action == MotionEvent.ACTION_UP || event.action == MotionEvent.ACTION_CANCEL) {
+            pillView.onGestureCancelled()
             velocityTracker?.recycle()
             velocityTracker = null
         }
 
         return consumed || super.onTouchEvent(event)
+    }
+
+    private fun vibrate(effectId: Int) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            vibrator?.vibrate(VibrationEffect.createPredefined(effectId))
+        }
     }
 }
