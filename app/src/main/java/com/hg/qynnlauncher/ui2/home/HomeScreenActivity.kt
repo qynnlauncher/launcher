@@ -14,9 +14,14 @@ import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
 import com.hg.qynnlauncher.services.gestures.GestureOverlayView
+import androidx.lifecycle.lifecycleScope
 import com.hg.qynnlauncher.services.gestures.GesturePillView
+import com.hg.qynnlauncher.services.settings2.QYNNSettings
+import com.hg.qynnlauncher.services.settings2.settingsDataStore
 import com.hg.qynnlauncher.ui2.home.composables.HomeScreen2
 import com.hg.qynnlauncher.ui2.theme.QYNNLauncherTheme
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 
 private val TAG = HomeScreenActivity::class.simpleName
 
@@ -54,11 +59,26 @@ class HomeScreenActivity : ComponentActivity()
         }
 
         // Add the gesture overlay and pill to the window
-        val decorView = window.decorView as ViewGroup
-        val gesturePill = GesturePillView(this)
-        val gestureOverlay = GestureOverlayView(this, gesturePill)
-        decorView.addView(gestureOverlay)
-        decorView.addView(gesturePill)
+        lifecycleScope.launch {
+            val settings = applicationContext.settingsDataStore.data.first()
+            val edgeSensitivity = QYNNSettings.edgeSensitivity.read(settings[QYNNSettings.edgeSensitivity.key])
+            val backVelocity = QYNNSettings.backVelocity.read(settings[QYNNSettings.backVelocity.key])
+            val recentsVelocity = QYNNSettings.recentsVelocity.read(settings[QYNNSettings.recentsVelocity.key])
+            val homeDistance = QYNNSettings.homeDistance.read(settings[QYNNSettings.homeDistance.key])
+
+            val decorView = window.decorView as ViewGroup
+            val gesturePill = GesturePillView(this@HomeScreenActivity)
+            val gestureOverlay = GestureOverlayView(
+                context = this@HomeScreenActivity,
+                pillView = gesturePill,
+                edgeSensitivityDp = edgeSensitivity,
+                backVelocityThreshold = backVelocity,
+                recentsVelocityThreshold = recentsVelocity,
+                homeDistanceThresholdDp = homeDistance
+            )
+            decorView.addView(gestureOverlay)
+            decorView.addView(gesturePill)
+        }
     }
 
     override fun onConfigurationChanged(newConfig: Configuration)

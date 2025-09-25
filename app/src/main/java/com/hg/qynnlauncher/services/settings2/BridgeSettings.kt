@@ -53,6 +53,12 @@ object QYNNSettings
         key = "showLaunchAppsWhenQYNNButtonCollapsed",
         displayName = "Show \"Launch apps\" button when the QYNN menu is collapsed",
     )
+
+    // Gesture Settings
+    val edgeSensitivity = QYNNSetting.float("edgeSensitivity", 30f, "Edge Sensitivity (dp)")
+    val backVelocity = QYNNSetting.float("backVelocity", 1500f, "Back Gesture Velocity (dp/s)")
+    val recentsVelocity = QYNNSetting.float("recentsVelocity", 800f, "Recents Gesture Velocity (dp/s)")
+    val homeDistance = QYNNSetting.float("homeDistance", 150f, "Home Gesture Distance (dp)")
 }
 
 val ResettableQYNNSettings = with(QYNNSettings)
@@ -68,5 +74,9 @@ val ResettableQYNNSettings = with(QYNNSettings)
         drawWebViewOverscrollEffects,
         showQYNNButton,
         showLaunchAppsWhenQYNNButtonCollapsed,
+        edgeSensitivity,
+        backVelocity,
+        recentsVelocity,
+        homeDistance,
     )
 }

@@ -43,4 +43,12 @@ class QynnGestureAccessibilityService : AccessibilityService() {
     fun performGlobalActionRecents() {
         performGlobalAction(GLOBAL_ACTION_RECENTS)
     }
+
+    fun performGlobalActionNotifications() {
+        performGlobalAction(GLOBAL_ACTION_NOTIFICATIONS)
+    }
+
+    fun performGlobalActionQuickSettings() {
+        performGlobalAction(GLOBAL_ACTION_QUICK_SETTINGS)
+    }
 }

@@ -14,7 +14,18 @@ import androidx.core.view.GestureDetectorCompat
 import java.util.LinkedList
 import kotlin.math.abs
 
-class GestureOverlayView(context: Context, private val pillView: GesturePillView) : View(context) {
+private const val LEFT_EDGE = 0
+private const val RIGHT_EDGE = 1
+private const val BOTTOM_EDGE = 2
+
+class GestureOverlayView(
+    context: Context,
+    private val pillView: GesturePillView,
+    private val edgeSensitivityDp: Float,
+    private val backVelocityThreshold: Float,
+    private val recentsVelocityThreshold: Float,
+    private val homeDistanceThresholdDp: Float
+) : View(context) {
 
     private val gestureDetector: GestureDetectorCompat
     private var velocityTracker: VelocityTracker? = null
@@ -22,24 +33,8 @@ class GestureOverlayView(context: Context, private val pillView: GesturePillView
 
     private val touchHistory = LinkedList<PointF>()
     private val historySize = 5
-
     private var isGestureInProgress = false
-
-    companion object {
-        // ... (constants remain the same)
-        private const val LEFT_EDGE = 0
-        private const val RIGHT_EDGE = 1
-        private const val BOTTOM_EDGE = 2
-
-        private const val EDGE_SENSITIVITY_DP = 30
-        private const val BOTTOM_SENSITIVITY_DP = 40
-
-        private const val VELOCITY_THRESHOLD_BACK = 1500f
-        private const val VELOCITY_THRESHOLD_RECENTS = 800f
-
-        private const val DISTANCE_THRESHOLD_HOME_DP = 150f
-        private const val DURATION_THRESHOLD_HOME_MS = 300L
-    }
+    private var pointerCount = 0
 
     private val edgeSizePx: Float
     private val bottomEdgeSizePx: Float
@@ -48,9 +43,9 @@ class GestureOverlayView(context: Context, private val pillView: GesturePillView
     init {
         setBackgroundColor(0x00000000) // Transparent
         val density = resources.displayMetrics.density
-        edgeSizePx = EDGE_SENSITIVITY_DP * density
-        bottomEdgeSizePx = BOTTOM_SENSITIVITY_DP * density
-        distanceThresholdHomePx = DISTANCE_THRESHOLD_HOME_DP * density
+        edgeSizePx = edgeSensitivityDp * density
+        bottomEdgeSizePx = 40f * density // Keep this constant for now
+        distanceThresholdHomePx = homeDistanceThresholdDp * density
 
         val gestureListener = object : GestureDetector.SimpleOnGestureListener() {
 
@@ -58,6 +53,8 @@ class GestureOverlayView(context: Context, private val pillView: GesturePillView
             private var gestureZone: Int? = null
 
             override fun onDown(e: MotionEvent): Boolean {
+                if (e.pointerCount > 1) return false
+
                 isGestureInProgress = false
                 touchHistory.clear()
                 addEventToHistory(e)
@@ -88,7 +85,7 @@ class GestureOverlayView(context: Context, private val pillView: GesturePillView
                 velocityX: Float,
                 velocityY: Float
             ): Boolean {
-                if (!isGestureInProgress) return false
+                if (!isGestureInProgress || e1 == null || e1.pointerCount > 1) return false
                 val zone = gestureZone ?: return false
 
                 pillView.onGestureCompleted()
@@ -97,19 +94,19 @@ class GestureOverlayView(context: Context, private val pillView: GesturePillView
 
                 when (zone) {
                     LEFT_EDGE -> {
-                        if (velocityX > VELOCITY_THRESHOLD_BACK && abs(velocityX) > abs(velocityY)) {
+                        if (velocityX > backVelocityThreshold && abs(velocityX) > abs(velocityY)) {
                             QynnGestureAccessibilityService.instance?.performGlobalActionBack()
                             return true
                         }
                     }
                     RIGHT_EDGE -> {
-                        if (velocityX < -VELOCITY_THRESHOLD_BACK && abs(velocityX) > abs(velocityY)) {
+                        if (velocityX < -backVelocityThreshold && abs(velocityX) > abs(velocityY)) {
                             QynnGestureAccessibilityService.instance?.performGlobalActionBack()
                             return true
                         }
                     }
                     BOTTOM_EDGE -> {
-                        if (velocityY < -VELOCITY_THRESHOLD_RECENTS && abs(velocityY) > abs(velocityX)) {
+                        if (velocityY < -recentsVelocityThreshold && abs(velocityY) > abs(velocityX)) {
                             QynnGestureAccessibilityService.instance?.performGlobalActionRecents()
                             return true
                         }
@@ -124,7 +121,7 @@ class GestureOverlayView(context: Context, private val pillView: GesturePillView
                 distanceX: Float,
                 distanceY: Float
             ): Boolean {
-                if (!isGestureInProgress) return false
+                if (!isGestureInProgress || e1 == null || e1.pointerCount > 1) return false
                 addEventToHistory(e2)
                 val smoothedPoint = getSmoothedPoint()
                 val startEvent = initialTouch ?: return false
@@ -132,9 +129,7 @@ class GestureOverlayView(context: Context, private val pillView: GesturePillView
                 val duration = e2.eventTime - startEvent.eventTime
                 val verticalMove = startEvent.y - smoothedPoint.y
 
-                // Gesture cancellation logic
                 if ((zone == LEFT_EDGE && distanceX < 0) || (zone == RIGHT_EDGE && distanceX > 0) || (zone == BOTTOM_EDGE && distanceY < 0)) {
-                    // User reversed direction
                     isGestureInProgress = false
                     pillView.onGestureCancelled()
                     return true
@@ -146,7 +141,7 @@ class GestureOverlayView(context: Context, private val pillView: GesturePillView
                     vibrate(VibrationEffect.EFFECT_CLICK)
                 }
 
-                if (zone == BOTTOM_EDGE && verticalMove > distanceThresholdHomePx && duration > DURATION_THRESHOLD_HOME_MS) {
+                if (zone == BOTTOM_EDGE && verticalMove > distanceThresholdHomePx && duration > 300L) {
                     pillView.onGestureCompleted()
                     vibrate(VibrationEffect.EFFECT_HEAVY_CLICK)
                     QynnGestureAccessibilityService.instance?.performGlobalActionHome()
@@ -160,7 +155,7 @@ class GestureOverlayView(context: Context, private val pillView: GesturePillView
     }
 
     private fun addEventToHistory(event: MotionEvent) {
-        if (touchHistory.size >= historySize) {
+        if (touchHistory.size >= 5) {
             touchHistory.removeFirst()
         }
         touchHistory.add(PointF(event.x, event.y))
@@ -178,6 +173,11 @@ class GestureOverlayView(context: Context, private val pillView: GesturePillView
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         velocityTracker?.addMovement(event)
+
+        if (event.pointerCount > 1) {
+            return handleMultiTouch(event)
+        }
+
         val consumed = gestureDetector.onTouchEvent(event)
 
         if (event.action == MotionEvent.ACTION_UP || event.action == MotionEvent.ACTION_CANCEL) {
@@ -191,6 +191,40 @@ class GestureOverlayView(context: Context, private val pillView: GesturePillView
         }
 
         return consumed || super.onTouchEvent(event)
+    }
+
+    private fun handleMultiTouch(event: MotionEvent): Boolean {
+        val action = event.actionMasked
+
+        when (action) {
+            MotionEvent.ACTION_POINTER_DOWN -> {
+                pointerCount = event.pointerCount
+                velocityTracker?.addMovement(event)
+                return true
+            }
+            MotionEvent.ACTION_MOVE -> {
+                 if (event.pointerCount != pointerCount) {
+                    pointerCount = event.pointerCount
+                    return true
+                }
+                velocityTracker?.addMovement(event)
+                velocityTracker?.computeCurrentVelocity(1000)
+                val velocityY = velocityTracker?.yVelocity ?: 0f
+
+                if (abs(velocityY) > 1000f) { // Hardcoded for now
+                    when (pointerCount) {
+                        2 -> QynnGestureAccessibilityService.instance?.performGlobalActionNotifications()
+                        3 -> QynnGestureAccessibilityService.instance?.performGlobalActionQuickSettings()
+                    }
+                    vibrate(VibrationEffect.EFFECT_HEAVY_CLICK)
+                    return true
+                }
+            }
+            MotionEvent.ACTION_POINTER_UP -> {
+                pointerCount = event.pointerCount - 1
+            }
+        }
+        return true
     }
 
     private fun vibrate(effectId: Int) {

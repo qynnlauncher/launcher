@@ -18,6 +18,11 @@ import kotlinx.coroutines.launch
 import kotlin.math.abs
 import kotlin.math.roundToInt
 
+/**
+ * A modifier that provides an iOS/MIUI-style elastic overscroll effect.
+ * This is a pure-Compose implementation that uses a `NestedScrollConnection`
+ * to intercept scroll events and apply a translation to the content.
+ */
 fun Modifier.elasticOverscroll(): Modifier = composed {
     val scope = rememberCoroutineScope()
     val translationY = remember { Animatable(0f) }

@@ -33,19 +33,26 @@ import com.hg.qynnlauncher.ui2.dirpicker.DirectoryPickerMode
 import com.hg.qynnlauncher.ui2.dirpicker.DirectoryPickerRealDirectory
 import com.hg.qynnlauncher.ui2.dirpicker.DirectoryPickerState
 import com.hg.qynnlauncher.ui2.progressdialog.MockExportProgressDialogActions
+import com.hg.qynnlauncher.ui2.settings.sections.gestures.SettingsScreen2GestureCustomizationSectionActions
+import com.hg.qynnlauncher.ui2.settings.sections.gestures.SettingsScreen2GestureCustomizationSectionState
 import com.hg.qynnlauncher.ui2.settings.sections.qynn.SettingsScreen2QYNNSectionActions
 import com.hg.qynnlauncher.ui2.settings.sections.qynn.SettingsScreen2QYNNSectionState
 import com.hg.qynnlauncher.ui2.settings.sections.development.SettingsScreen2DevelopmentSectionActions
+import com.hg.qynnlauncher.ui2.settings.sections.development.SettingsScreen2DevelopmentSectionContent
 import com.hg.qynnlauncher.ui2.settings.sections.development.SettingsScreen2DevelopmentSectionState
 import com.hg.qynnlauncher.ui2.settings.sections.overlays.SettingsScreen2OverlaysSectionActions
+import com.hg.qynnlauncher.ui2.settings.sections.overlays.SettingsScreen2OverlaysSectionContent
 import com.hg.qynnlauncher.ui2.settings.sections.overlays.SettingsScreen2OverlaysSectionState
 import com.hg.qynnlauncher.ui2.settings.sections.project.ScreenLockingMethodOptions
 import com.hg.qynnlauncher.ui2.settings.sections.project.SettingsScreen2ProjectSectionActions
+import com.hg.qynnlauncher.ui2.settings.sections.project.SettingsScreen2ProjectSectionContent
 import com.hg.qynnlauncher.ui2.settings.sections.project.SettingsScreen2ProjectSectionState
 import com.hg.qynnlauncher.ui2.settings.sections.project.SettingsScreen2ProjectSectionStateProjectInfo
 import com.hg.qynnlauncher.ui2.settings.sections.reset.SettingsScreen2ResetSectionActions
+import com.hg.qynnlauncher.ui2.settings.sections.reset.SettingsScreen2ResetSectionContent
 import com.hg.qynnlauncher.ui2.settings.sections.reset.SettingsScreen2ResetSectionState
 import com.hg.qynnlauncher.ui2.settings.sections.wallpaper.SettingsScreen2WallpaperSectionActions
+import com.hg.qynnlauncher.ui2.settings.sections.wallpaper.SettingsScreen2WallpaperSectionContent
 import com.hg.qynnlauncher.ui2.settings.sections.wallpaper.SettingsScreen2WallpaperSectionState
 import com.hg.qynnlauncher.utils.CurrentAndroidVersion
 import com.hg.qynnlauncher.utils.QYNNLauncherApplication
@@ -90,6 +97,17 @@ class SettingsScreenVM(
     private val _drawWebViewOverscrollEffects by useQYNNSettingState(_app, QYNNSettings.drawWebViewOverscrollEffects)
     private val _showQYNNButton by useQYNNSettingState(_app, QYNNSettings.showQYNNButton)
     private val _showLaunchAppsWhenQYNNButtonCollapsed by useQYNNSettingState(_app, QYNNSettings.showLaunchAppsWhenQYNNButtonCollapsed)
+
+    // Gesture Settings
+    val edgeSensitivity by useQYNNSettingState(_app, QYNNSettings.edgeSensitivity)
+    val backVelocity by useQYNNSettingState(_app, QYNNSettings.backVelocity)
+    val recentsVelocity by useQYNNSettingState(_app, QYNNSettings.recentsVelocity)
+    val homeDistance by useQYNNSettingState(_app, QYNNSettings.homeDistance)
+
+    fun setEdgeSensitivity(value: Float) = updateSettings { setQYNNSetting(QYNNSettings.edgeSensitivity, value) }
+    fun setBackVelocity(value: Float) = updateSettings { setQYNNSetting(QYNNSettings.backVelocity, value) }
+    fun setRecentsVelocity(value: Float) = updateSettings { setQYNNSetting(QYNNSettings.recentsVelocity, value) }
+    fun setHomeDistance(value: Float) = updateSettings { setQYNNSetting(QYNNSettings.homeDistance, value) }
 
     // PROJECT
 
@@ -197,6 +215,22 @@ class SettingsScreenVM(
                 )
             }
         },
+    )
+
+    val gestureCustomizationSectionState by derivedStateOf {
+        SettingsScreen2GestureCustomizationSectionState(
+            edgeSensitivity = edgeSensitivity,
+            backVelocity = backVelocity,
+            recentsVelocity = recentsVelocity,
+            homeDistance = homeDistance,
+        )
+    }
+
+    val gestureCustomizationSectionActions = SettingsScreen2GestureCustomizationSectionActions(
+        changeEdgeSensitivity = ::setEdgeSensitivity,
+        changeBackVelocity = ::setBackVelocity,
+        changeRecentsVelocity = ::setRecentsVelocity,
+        changeHomeDistance = ::setHomeDistance,
     )
 
 

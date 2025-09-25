@@ -2,6 +2,7 @@ package com.hg.qynnlauncher.services.settings2
 
 import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.booleanPreferencesKey
+import androidx.datastore.preferences.core.floatPreferencesKey
 import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.hg.qynnlauncher.utils.RawRepresentable
@@ -57,6 +58,22 @@ data class QYNNSetting<TPreference, TResult>(
                 resettable = true,
                 read = { it?.let { File(it) } },
                 write = { it?.canonicalPath },
+            )
+        }
+
+
+        fun float(
+            key: String,
+            defaultValue: Float,
+            displayName: String = key,
+        ): QYNNSetting<Float, Float>
+        {
+            return QYNNSetting(
+                floatPreferencesKey("SettingsState.$key"),
+                resettable = true,
+                displayName = displayName,
+                read = { it ?: defaultValue },
+                write = { it },
             )
         }
 

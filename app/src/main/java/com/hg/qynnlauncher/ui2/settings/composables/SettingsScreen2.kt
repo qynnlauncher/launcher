@@ -31,7 +31,9 @@ import com.hg.qynnlauncher.ui2.progressdialog.MockExportProgressDialogActions
 import com.hg.qynnlauncher.ui2.settings.SettingsScreen2MiscActions
 import com.hg.qynnlauncher.ui2.settings.SettingsScreenVM
 import com.hg.qynnlauncher.ui2.settings.sections.about.SettingsScreen2AboutSectionContent
-import com.hg.qynnlauncher.ui2.settings.sections.gestures.SettingsScreen2GesturesSectionContent
+import com.hg.qynnlauncher.ui2.settings.sections.gestures.SettingsScreen2GestureCustomizationSectionActions
+import com.hg.qynnlauncher.ui2.settings.sections.gestures.SettingsScreen2GestureCustomizationSectionContent
+import com.hg.qynnlauncher.ui2.settings.sections.gestures.SettingsScreen2GestureCustomizationSectionState
 import com.hg.qynnlauncher.ui2.settings.sections.qynn.SettingsScreen2QYNNSectionActions
 import com.hg.qynnlauncher.ui2.settings.sections.qynn.SettingsScreen2QYNNSectionContent
 import com.hg.qynnlauncher.ui2.settings.sections.qynn.SettingsScreen2QYNNSectionState
@@ -74,6 +76,9 @@ fun SettingsScreen2(vm: SettingsScreenVM = viewModel(), requestFinish: () -> Uni
         qynnSectionState = vm.qynnSectionState.value,
         qynnSectionActions = vm.qynnSectionActions,
 
+        gestureCustomizationSectionState = vm.gestureCustomizationSectionState,
+        gestureCustomizationSectionActions = vm.gestureCustomizationSectionActions,
+
         developmentSectionState = vm.developmentSectionState.value,
         developmentSectionActions = vm.developmentSectionActions,
 
@@ -104,6 +109,9 @@ fun SettingsScreen2(
 
     qynnSectionState: SettingsScreen2QYNNSectionState,
     qynnSectionActions: SettingsScreen2QYNNSectionActions,
+
+    gestureCustomizationSectionState: SettingsScreen2GestureCustomizationSectionState,
+    gestureCustomizationSectionActions: SettingsScreen2GestureCustomizationSectionActions,
 
     developmentSectionState: SettingsScreen2DevelopmentSectionState,
     developmentSectionActions: SettingsScreen2DevelopmentSectionActions,
@@ -205,7 +213,10 @@ fun SettingsScreen2(
                 Divider()
 
                 SettingsScreen2Section(label = "Gestures", iconResId = R.drawable.ic_qynn) {
-                    SettingsScreen2GesturesSectionContent()
+                    SettingsScreen2GestureCustomizationSectionContent(
+                        state = gestureCustomizationSectionState,
+                        actions = gestureCustomizationSectionActions,
+                    )
                 }
 
                 Divider()
@@ -291,6 +302,14 @@ fun SettingsScreen2Preview01()
                 showLaunchAppsWhenQYNNButtonCollapsed = false,
             ),
             qynnSectionActions = SettingsScreen2QYNNSectionActions.empty(),
+
+            gestureCustomizationSectionState = SettingsScreen2GestureCustomizationSectionState(
+                edgeSensitivity = 50f,
+                backVelocity = 2000f,
+                recentsVelocity = 2000f,
+                homeDistance = 200f,
+            ),
+            gestureCustomizationSectionActions = SettingsScreen2GestureCustomizationSectionActions.empty(),
 
             developmentSectionState = SettingsScreen2DevelopmentSectionState(
                 isExportDisabled = false,

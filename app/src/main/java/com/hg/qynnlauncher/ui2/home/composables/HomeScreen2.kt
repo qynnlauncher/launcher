@@ -36,6 +36,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInParent
@@ -177,26 +178,36 @@ fun HomeScreen2(
                         modifier = Modifier.fillMaxSize()
                     ) { page ->
                         val webViewState = rememberSaveableWebViewState()
-                            val navigator = rememberWebViewNavigator()
-                            var webView by remember { mutableStateOf<android.webkit.WebView?>(null) }
+                        val navigator = rememberWebViewNavigator()
+                        var webView by remember { mutableStateOf<android.webkit.WebView?>(null) }
 
-                            WebView(
-                                state = webViewState,
-                                navigator = navigator,
-                                client = webViewDeps.webViewClient,
-                                chromeClient = webViewDeps.chromeClient,
-                                onCreated = {
-                                    webView = it
-                                    it.setBackgroundColor(0x00000000)
-                                    it.clearCache(true)
-                                    webViewDeps.onCreated(it)
+                        WebView(
+                            state = webViewState,
+                            navigator = navigator,
+                            client = webViewDeps.webViewClient,
+                            chromeClient = webViewDeps.chromeClient,
+                            onCreated = {
+                                webView = it
+                                it.setBackgroundColor(0x00000000)
+                                it.clearCache(true)
+                                webViewDeps.onCreated(it)
+                            },
+                            onDispose = {
+                                webView = null
+                                webViewDeps.onDispose
+                            },
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .graphicsLayer {
+                                    // Calculate the absolute offset for the current page from the
+                                    // scroll position. We use the absolute value which allows us to mirror
+                                    // the effect for both directions.
+                                    val pageOffset = (pagerState.currentPage - page) + pagerState.currentPageOffset
+
+                                    // We apply a translationX effect to create a parallax effect
+                                    translationX = pageOffset * (size.width / 2)
                                 },
-                                onDispose = {
-                                    webView = null
-                                    webViewDeps.onDispose
-                                },
-                                modifier = Modifier.fillMaxSize(),
-                            )
+                        )
 
                             val drawOverscrollEffects = webViewDeps.drawOverscrollEffects.value
                             LaunchedEffect(drawOverscrollEffects) {
