@@ -1,6 +1,7 @@
 package com.hg.qynnlauncher.services.gestures
 
 import android.content.Context
+import android.graphics.PointF
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
@@ -10,6 +11,7 @@ import android.view.VelocityTracker
 import android.view.View
 import androidx.core.content.getSystemService
 import androidx.core.view.GestureDetectorCompat
+import java.util.LinkedList
 import kotlin.math.abs
 
 class GestureOverlayView(context: Context, private val pillView: GesturePillView) : View(context) {
@@ -18,7 +20,13 @@ class GestureOverlayView(context: Context, private val pillView: GesturePillView
     private var velocityTracker: VelocityTracker? = null
     private val vibrator: Vibrator? = context.getSystemService()
 
+    private val touchHistory = LinkedList<PointF>()
+    private val historySize = 5
+
+    private var isGestureInProgress = false
+
     companion object {
+        // ... (constants remain the same)
         private const val LEFT_EDGE = 0
         private const val RIGHT_EDGE = 1
         private const val BOTTOM_EDGE = 2
@@ -26,11 +34,9 @@ class GestureOverlayView(context: Context, private val pillView: GesturePillView
         private const val EDGE_SENSITIVITY_DP = 30
         private const val BOTTOM_SENSITIVITY_DP = 40
 
-        // Velocity thresholds in dp/second
         private const val VELOCITY_THRESHOLD_BACK = 1500f
         private const val VELOCITY_THRESHOLD_RECENTS = 800f
 
-        // Distance and time thresholds for slow drag (Home)
         private const val DISTANCE_THRESHOLD_HOME_DP = 150f
         private const val DURATION_THRESHOLD_HOME_MS = 300L
     }
@@ -52,6 +58,9 @@ class GestureOverlayView(context: Context, private val pillView: GesturePillView
             private var gestureZone: Int? = null
 
             override fun onDown(e: MotionEvent): Boolean {
+                isGestureInProgress = false
+                touchHistory.clear()
+                addEventToHistory(e)
                 initialTouch = MotionEvent.obtain(e)
                 velocityTracker?.clear()
                 velocityTracker = velocityTracker ?: VelocityTracker.obtain()
@@ -65,6 +74,7 @@ class GestureOverlayView(context: Context, private val pillView: GesturePillView
                 }
 
                 if (gestureZone != null) {
+                    isGestureInProgress = true
                     pillView.onGestureStarted()
                     vibrate(VibrationEffect.EFFECT_TICK)
                 }
@@ -78,11 +88,12 @@ class GestureOverlayView(context: Context, private val pillView: GesturePillView
                 velocityX: Float,
                 velocityY: Float
             ): Boolean {
-                val startEvent = initialTouch ?: return false
+                if (!isGestureInProgress) return false
                 val zone = gestureZone ?: return false
 
                 pillView.onGestureCompleted()
                 vibrate(VibrationEffect.EFFECT_HEAVY_CLICK)
+                isGestureInProgress = false
 
                 when (zone) {
                     LEFT_EDGE -> {
@@ -113,10 +124,21 @@ class GestureOverlayView(context: Context, private val pillView: GesturePillView
                 distanceX: Float,
                 distanceY: Float
             ): Boolean {
+                if (!isGestureInProgress) return false
+                addEventToHistory(e2)
+                val smoothedPoint = getSmoothedPoint()
                 val startEvent = initialTouch ?: return false
                 val zone = gestureZone ?: return false
                 val duration = e2.eventTime - startEvent.eventTime
-                val verticalMove = startEvent.y - e2.y
+                val verticalMove = startEvent.y - smoothedPoint.y
+
+                // Gesture cancellation logic
+                if ((zone == LEFT_EDGE && distanceX < 0) || (zone == RIGHT_EDGE && distanceX > 0) || (zone == BOTTOM_EDGE && distanceY < 0)) {
+                    // User reversed direction
+                    isGestureInProgress = false
+                    pillView.onGestureCancelled()
+                    return true
+                }
 
                 val progress = (verticalMove / distanceThresholdHomePx).coerceIn(0f, 1f)
                 pillView.onGestureProgress(progress)
@@ -128,8 +150,7 @@ class GestureOverlayView(context: Context, private val pillView: GesturePillView
                     pillView.onGestureCompleted()
                     vibrate(VibrationEffect.EFFECT_HEAVY_CLICK)
                     QynnGestureAccessibilityService.instance?.performGlobalActionHome()
-                    initialTouch = null
-                    gestureZone = null
+                    isGestureInProgress = false
                     return true
                 }
                 return false
@@ -138,14 +159,35 @@ class GestureOverlayView(context: Context, private val pillView: GesturePillView
         gestureDetector = GestureDetectorCompat(context, gestureListener)
     }
 
+    private fun addEventToHistory(event: MotionEvent) {
+        if (touchHistory.size >= historySize) {
+            touchHistory.removeFirst()
+        }
+        touchHistory.add(PointF(event.x, event.y))
+    }
+
+    private fun getSmoothedPoint(): PointF {
+        var sumX = 0f
+        var sumY = 0f
+        for (point in touchHistory) {
+            sumX += point.x
+            sumY += point.y
+        }
+        return PointF(sumX / touchHistory.size, sumY / touchHistory.size)
+    }
+
     override fun onTouchEvent(event: MotionEvent): Boolean {
         velocityTracker?.addMovement(event)
         val consumed = gestureDetector.onTouchEvent(event)
 
         if (event.action == MotionEvent.ACTION_UP || event.action == MotionEvent.ACTION_CANCEL) {
-            pillView.onGestureCancelled()
+            if (isGestureInProgress) {
+                pillView.onGestureCancelled()
+            }
             velocityTracker?.recycle()
             velocityTracker = null
+            touchHistory.clear()
+            isGestureInProgress = false
         }
 
         return consumed || super.onTouchEvent(event)
