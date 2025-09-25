@@ -4,6 +4,8 @@ import android.annotation.SuppressLint
 import android.app.Application
 import android.content.Context
 import android.webkit.WebView
+import androidx.compose.material.ExperimentalMaterialApi
+import androidx.compose.material.ModalBottomSheetValue
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.datastore.preferences.core.edit
@@ -13,8 +15,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.hg.qynnlauncher.QYNNLauncherApplication
-import com.hg.qynnlauncher.api2.qynntojs.QYNNToJSAPI
 import com.hg.qynnlauncher.api2.jstoqynn.JSToQYNNAPI
+import com.hg.qynnlauncher.api2.qynntojs.QYNNToJSAPI
 import com.hg.qynnlauncher.api2.server.QYNNServer
 import com.hg.qynnlauncher.api2.webview.QYNNWebChromeClient
 import com.hg.qynnlauncher.api2.webview.QYNNWebViewClient
@@ -29,16 +31,18 @@ import com.hg.qynnlauncher.services.settings2.settingsDataStore
 import com.hg.qynnlauncher.services.settings2.useQYNNSettingState
 import com.hg.qynnlauncher.services.uimode.SystemUIModeHolder
 import com.hg.qynnlauncher.services.windowinsetsholder.WindowInsetsHolder
+import com.hg.qynnlauncher.ui2.home.composables.onQYNNWebViewCreated
 import com.hg.qynnlauncher.ui2.home.qynnmenu.QYNNMenuActions
 import com.hg.qynnlauncher.ui2.home.qynnmenu.QYNNMenuState
-import com.hg.qynnlauncher.ui2.home.composables.onQYNNWebViewCreated
 import com.hg.qynnlauncher.utils.QYNNLauncherApplication
 import com.hg.qynnlauncher.utils.collectAsStateButInViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
 private const val TAG = "HomeScreen2VM"
 
+@OptIn(ExperimentalMaterialApi::class)
 class HomeScreen2VM(
     private val _app: QYNNLauncherApplication,
     private val _permsHolder: PermsHolder,
@@ -52,6 +56,26 @@ class HomeScreen2VM(
     private val _displayShapeHolder: DisplayShapeHolder,
 ) : ViewModel()
 {
+    // Sheet State
+    private val _appDrawerSheetState = MutableStateFlow(ModalBottomSheetValue.Hidden)
+    val appDrawerSheetState = _appDrawerSheetState.asStateFlow()
+
+    fun openAppDrawer() {
+        viewModelScope.launch {
+            _appDrawerSheetState.value = ModalBottomSheetValue.Expanded
+        }
+    }
+
+    fun onAppDrawerSheetStateChange(newValue: ModalBottomSheetValue) {
+        _appDrawerSheetState.value = newValue
+    }
+
+    fun hideAppDrawer() {
+        viewModelScope.launch {
+            _appDrawerSheetState.value = ModalBottomSheetValue.Hidden
+        }
+    }
+
     // SETTINGS STATE
 
     private val _currentProjDir by useQYNNSettingState(_app, QYNNSettings.currentProjDir)
@@ -76,6 +100,7 @@ class HomeScreen2VM(
             }
         },
         onRequestIsExpandedChange = { _qynnMenuIsExpandedStateFlow.value = it },
+        onAppDrawerButtonPress = { openAppDrawer() }
     )
 
     val systemUIState = derivedStateOf {
@@ -135,6 +160,10 @@ class HomeScreen2VM(
         },
         drawOverscrollEffects = _drawWebViewOverscrollEffects
     )
+
+    init {
+        _jsToQYNNInterface.homeScreenVM = this
+    }
 
     fun afterCreate(context: Context)
     {

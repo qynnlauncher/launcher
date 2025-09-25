@@ -40,6 +40,7 @@ import com.hg.qynnlauncher.services.system.QYNNLauncherAccessibilityService
 import com.hg.qynnlauncher.services.windowinsetsholder.WindowInsetsHolder
 import com.hg.qynnlauncher.services.windowinsetsholder.WindowInsetsOptions
 import com.hg.qynnlauncher.services.windowinsetsholder.WindowInsetsSnapshot
+import com.hg.qynnlauncher.ui2.home.HomeScreen2VM
 import com.hg.qynnlauncher.utils.CurrentAndroidVersion
 import com.hg.qynnlauncher.utils.getIsSystemInNightMode
 import com.hg.qynnlauncher.utils.launchApp
@@ -49,7 +50,6 @@ import com.hg.qynnlauncher.utils.q
 import com.hg.qynnlauncher.utils.requestAppUninstall
 import com.hg.qynnlauncher.utils.showErrorToast
 import com.hg.qynnlauncher.utils.startAndroidSettingsActivity
-import com.hg.qynnlauncher.utils.startQYNNAppDrawerActivity
 import com.hg.qynnlauncher.utils.startQYNNSettingsActivity
 import com.hg.qynnlauncher.utils.startDevConsoleActivity
 import com.hg.qynnlauncher.utils.startWallpaperPickerActivity
@@ -76,6 +76,7 @@ class JSToQYNNAPI(
 
     var webView: WebView? = null
     var homeScreenContext: Context? = null
+    var homeScreenVM: HomeScreen2VM? = null
 
 
     // SETTING STATES
@@ -568,7 +569,8 @@ class JSToQYNNAPI(
     @JavascriptInterface
     fun requestOpenQYNNAppDrawer(showToastIfFailed: Boolean = true): Boolean
     {
-        return tryRunInHomescreenContext(showToastIfFailed) { startQYNNAppDrawerActivity() }
+        homeScreenVM?.openAppDrawer()
+        return true
     }
 
     @JvmOverloads

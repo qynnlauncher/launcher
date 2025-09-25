@@ -13,7 +13,6 @@ import android.util.Log
 import android.widget.Toast
 import com.hg.qynnlauncher.R
 import com.hg.qynnlauncher.services.apps.InstalledApp
-import com.hg.qynnlauncher.ui2.appdrawer.AppDrawerActivity
 import com.hg.qynnlauncher.ui2.devconsole.DevConsoleActivity
 import com.hg.qynnlauncher.ui2.settings.SettingsScreenActivity
 
@@ -52,9 +51,6 @@ suspend fun Context.suspendTryOrShowErrorToast(action: suspend Context.() -> Uni
 
 fun Context.startQYNNSettingsActivity() = startActivity(Intent(this, SettingsScreenActivity::class.java))
 fun Context.tryStartQYNNSettingsActivity() = tryOrShowErrorToast { startQYNNSettingsActivity() }
-
-fun Context.startQYNNAppDrawerActivity() = startActivity(Intent(this, AppDrawerActivity::class.java))
-fun Context.tryStartQYNNAppDrawerActivity() = tryOrShowErrorToast { startQYNNAppDrawerActivity() }
 
 fun Context.startDevConsoleActivity() = startActivity(Intent(this, DevConsoleActivity::class.java))
 fun Context.tryStartDevConsoleActivity() = tryOrShowErrorToast { startDevConsoleActivity() }

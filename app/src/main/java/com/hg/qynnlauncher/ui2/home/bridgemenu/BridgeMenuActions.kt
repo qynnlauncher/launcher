@@ -4,10 +4,11 @@ data class QYNNMenuActions(
     val onWebViewRefreshRequest: () -> Unit,
     val onHideQYNNButtonRequest: () -> Unit,
     val onRequestIsExpandedChange: (newIsExpanded: Boolean) -> Unit,
+    val onAppDrawerButtonPress: () -> Unit,
 )
 {
     companion object
     {
-        fun empty() = QYNNMenuActions({}, {}, {})
+        fun empty() = QYNNMenuActions({}, {}, {}, {})
     }
 }

@@ -30,7 +30,6 @@ import com.hg.qynnlauncher.ui2.shared.ResIcon
 import com.hg.qynnlauncher.ui2.theme.QYNNLauncherThemeStateless
 import com.hg.qynnlauncher.utils.addAll
 import com.hg.qynnlauncher.utils.tryStartAndroidHomeSettingsActivity
-import com.hg.qynnlauncher.utils.tryStartQYNNAppDrawerActivity
 import com.hg.qynnlauncher.utils.tryStartQYNNSettingsActivity
 import com.hg.qynnlauncher.utils.tryStartDevConsoleActivity
 
@@ -61,7 +60,7 @@ fun QYNNMenu(
     if (state.isExpanded || state.showAppDrawerButtonWhenCollapsed)
     {
         entriesToDisplay.addAll(
-            Button(R.drawable.ic_apps, "Built-in app drawer") { context.tryStartQYNNAppDrawerActivity() },
+            Button(R.drawable.ic_apps, "Built-in app drawer", actions.onAppDrawerButtonPress),
             Divider,
         )
     }
